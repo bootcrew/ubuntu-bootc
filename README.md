@@ -2,6 +2,7 @@
 
 Experiment to see if Bootc could work on Ubuntu
 
+<img width="2192" height="1239" alt="image" src="https://github.com/user-attachments/assets/a203c7ab-3a13-40da-baf2-d73e5b3b34d1" />
 
 ## Building
 
