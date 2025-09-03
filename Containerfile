@@ -1,6 +1,5 @@
 FROM docker.io/library/ubuntu:questing
 
-COPY files/37composefs/ /usr/lib/dracut/modules.d/37composefs/
 COPY files/ostree/prepare-root.conf /usr/lib/ostree/prepare-root.conf
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -15,9 +14,10 @@ RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
     git fetch --all && \
     git switch origin/composefs-backend -d && \
     /root/.cargo/bin/cargo build --release --bins && \
-    install -Dpm0755 -t /usr/bin ./target/release/bootc && \
-    install -Dpm0755 -t /usr/bin ./target/release/system-reinstall-bootc && \
-    install -Dpm0755 -t /usr/bin ./target/release/bootc-initramfs-setup
+    install -Dpm0755 -t /usr/lib/dracut/modules.d/37composefs/ ./crates/initramfs/dracut/module-setup.sh && \
+    install -Dpm0644 -t /usr/lib/systemd/system/ ./crates/initramfs/bootc-root-setup.service && \
+    install -Dpm0755 -t /usr/bin ./target/release/bootc ./target/release/system-reinstall-bootc && \
+    install -Dpm0755  ./target/release/bootc-initramfs-setup /usr/lib/bootc/initramfs-setup 
 
 RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
     git clone https://github.com/p5/coreos-bootupd.git bootupd && \
@@ -28,17 +28,8 @@ RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
     install -Dpm0755 -t /usr/bin ./target/release/bootupd && \
     ln -s ./bootupd /usr/bin/bootupctl
 
-RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
-    git clone https://github.com/containers/composefs.git composefs && \
-    cd composefs && \
-    git fetch --all && \
-    meson setup build --prefix=/usr --default-library=shared -Dfuse=enabled && \
-    ninja -C build && \
-    ninja -C build install
-
 RUN apt install -y \
   dracut \
-  podman \
   linux-image-generic \
   linux-firmware \
   systemd \
@@ -58,8 +49,6 @@ RUN apt install -y \
   fdisk \
   systemd-boot*
 
-RUN cp /usr/bin/bootc-initramfs-setup /usr/lib/dracut/modules.d/37composefs
-
 RUN echo "$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "*.img" | tail -n 1)")" > kernel_version.txt && \
     dracut --force --no-hostonly --reproducible --zstd --verbose --kver "$(cat kernel_version.txt)"  "/usr/lib/modules/$(cat kernel_version.txt)/initramfs.img" && \
     cp /boot/vmlinuz-$(cat kernel_version.txt) "/usr/lib/modules/$(cat kernel_version.txt)/vmlinuz" && \
@@ -68,13 +57,15 @@ RUN echo "$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "
 # If you want a desktop :)
 # RUN apt install -y ubuntu-desktop-minimal
 
-# Alter root file structure a bit for ostree
-RUN mkdir -p /boot /sysroot /var/home && \
+# Make expected mutable / directories
+RUN rm /snap -r && \
+    mkdir -p /boot /sysroot /var/home && \
     rm -rf /var/log /home /root /usr/local /srv && \
     ln -s /var/home /home && \
     ln -s /var/roothome /root && \
     ln -s /var/usrlocal /usr/local && \
-    ln -s /var/srv /srv
+    ln -s /var/srv /srv && \
+    ln -s /var/lib/snapd/snap /snap
 
 # Setup a temporary root passwd (changeme) for dev purposes
 # TODO: Replace this for a more robust option when in prod
