@@ -1,0 +1,11 @@
+[Unit]
+Before=snapd.socket
+
+[Mount]
+What=/var/lib/snapd/snap
+Where=/snap
+Options=bind
+Type=none
+
+[Install]
+WantedBy=snapd.socket

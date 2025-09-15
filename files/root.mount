@@ -1,0 +1,11 @@
+[Unit]
+Before=snapd.socket
+
+[Mount]
+What=/var/roothome
+Where=/root
+Options=bind
+Type=none
+
+[Install]
+WantedBy=snapd.socket

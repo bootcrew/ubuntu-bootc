@@ -8,16 +8,17 @@ RUN apt update -y && apt install -y libzstd-dev libssl-dev pkg-config libostree-
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
+ENV CARGO_FEATURES="composefs-backend"
+ENV PATH="/root/.cargo/bin:$PATH"
+
 RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
     git clone https://github.com/bootc-dev/bootc.git bootc && \
     cd bootc && \
     git fetch --all && \
     git switch origin/composefs-backend -d && \
-    /root/.cargo/bin/cargo build --release --bins && \
-    install -Dpm0755 -t /usr/lib/dracut/modules.d/37composefs/ ./crates/initramfs/dracut/module-setup.sh && \
-    install -Dpm0644 -t /usr/lib/systemd/system/ ./crates/initramfs/bootc-root-setup.service && \
-    install -Dpm0755 -t /usr/bin ./target/release/bootc ./target/release/system-reinstall-bootc && \
-    install -Dpm0755  ./target/release/bootc-initramfs-setup /usr/lib/bootc/initramfs-setup 
+    make && \
+    make install-all && \
+    make install-initramfs-dracut
 
 RUN --mount=type=tmpfs,dst=/tmp cd /tmp && \
     git clone https://github.com/p5/coreos-bootupd.git bootupd && \
@@ -55,21 +56,30 @@ RUN echo "$(basename "$(find /usr/lib/modules -maxdepth 1 -type d | grep -v -E "
     rm kernel_version.txt
 
 # If you want a desktop :)
-# RUN apt install -y ubuntu-desktop-minimal
+RUN apt install -y ubuntu-desktop-minimal
 
 # Make expected mutable / directories
-RUN rm /snap -r && \
+RUN rm /snap -rf && \
     mkdir -p /boot /sysroot /var/home && \
-    rm -rf /var/log /home /root /usr/local /srv && \
-    ln -s /var/home /home && \
-    ln -s /var/roothome /root && \
+    rm -rf /var/log /root /usr/local /srv && \
     ln -s /var/usrlocal /usr/local && \
     ln -s /var/srv /srv && \
-    ln -s /var/lib/snapd/snap /snap
+    mkdir -p /snap /home /root
+
+COPY files/root.mount /usr/lib/systemd/system/
+COPY files/home.mount /usr/lib/systemd/system/
+COPY files/snap.mount /usr/lib/systemd/system/
+COPY files/tmpfiles-snap.conf /usr/lib/tmpfiles.d/
 
 # Setup a temporary root passwd (changeme) for dev purposes
 # TODO: Replace this for a more robust option when in prod
 RUN usermod -p '$6$AJv9RHlhEXO6Gpul$5fvVTZXeM0vC03xckTIjY8rdCofnkKSzvF5vEzXDKAby5p3qaOGTHDypVVxKsCE3CbZz7C3NXnbpITrEUvN/Y/' root
+
+RUN systemctl enable home.mount snap.mount root.mount
+RUN rm /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages && \
+    userdel --remove ubuntu && \
+    mkdir --parents /etc/pkcs11/modules && \
+     mkdir /usr/share/empty
 
 # Necessary labels
 LABEL containers.bootc 1
