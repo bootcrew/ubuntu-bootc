@@ -2,14 +2,14 @@ FROM docker.io/library/ubuntu:questing
 
 ARG DEBIAN_FRONTEND=noninteractive
 # Antipattern but we are doing this since `apt`/`debootstrap` does not allow chroot installation on unprivileged podman builds
-ENV DEV_DEPS="libzstd-dev libssl-dev pkg-config libostree-dev curl git build-essential meson libfuse3-dev go-md2man dracut whois"
+ENV DEV_DEPS="libzstd-dev libssl-dev pkg-config libostree-dev curl git build-essential meson libfuse3-dev go-md2man whois"
 
 RUN rm /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages && \
     userdel --remove ubuntu && \
     mkdir --parents /etc/pkcs11/modules && \
     mkdir /usr/share/empty && \
     apt update -y && \
-    apt install -y $DEV_DEPS ostree
+    apt install -y $DEV_DEPS ostree dracut
 
 RUN --mount=type=tmpfs,dst=/tmp --mount=type=tmpfs,dst=/root \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --profile minimal -y && \
