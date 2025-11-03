@@ -2,14 +2,11 @@ FROM docker.io/library/ubuntu:questing
 
 ARG DEBIAN_FRONTEND=noninteractive
 # Antipattern but we are doing this since `apt`/`debootstrap` does not allow chroot installation on unprivileged podman builds
-ENV DEV_DEPS="libzstd-dev libssl-dev pkg-config libostree-dev curl git build-essential meson libfuse3-dev go-md2man"
+ENV DEV_DEPS="libzstd-dev libssl-dev pkg-config libostree-dev curl git build-essential meson libfuse3-dev go-md2man dracut"
 
 RUN rm /etc/apt/apt.conf.d/docker-gzip-indexes /etc/apt/apt.conf.d/docker-no-languages && \
-    userdel --remove ubuntu && \
-    mkdir --parents /etc/pkcs11/modules && \
-    mkdir /usr/share/empty && \
     apt update -y && \
-    apt install -y $DEV_DEPS ostree dracut
+    apt install -y $DEV_DEPS ostree
 
 ENV CARGO_HOME=/tmp/rust
 ENV RUSTUP_HOME=/tmp/rust
@@ -61,7 +58,7 @@ RUN rm -rf /snap /boot /root /usr/local /srv && \
 
 # Necessary for `bootc install`
 RUN mkdir -p /usr/lib/ostree && \
-    printf  "[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n" | \
+    printf "[composefs]\nenabled = yes\n[sysroot]\nreadonly = true\n" | \
     tee "/usr/lib/ostree/prepare-root.conf"
 
 RUN bootc container lint
