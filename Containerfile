@@ -40,12 +40,6 @@ RUN apt remove -y $DEV_DEPS && \
     apt autoremove -y
 ENV DEV_DEPS=
 
-# Currently (03/11/2025), bootc relies on `cp -a` to properly copy the `/etc` for three-way merging, which entirely breaks on uutils `cp` since it scans the directories, than copies, so no files actually get copied during an update or rebase. Please remove once bootc upstream has changed these lines:
-# https://github.com/bootc-dev/bootc/blob/042aa21d235dd9f13f30b74d0b515e46f03f88e2/crates/lib/src/bootc_composefs/state.rs#L95-L101
-# FIXME: remove
-RUN apt install -y busybox && \
-    ln -s ./busybox /usr/bin/cp
-
 COPY files/root.mount /usr/lib/systemd/system/
 COPY files/home.mount /usr/lib/systemd/system/
 COPY files/snap.mount /usr/lib/systemd/system/
