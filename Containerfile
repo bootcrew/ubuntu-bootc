@@ -53,7 +53,6 @@ RUN sed -i 's|^HOME=.*|HOME=/var/home|' "/etc/default/useradd"
 # We do this slightly differently from other images because of snapd
 RUN rm -rf /snap /boot /root /usr/local /srv && \
     mkdir -p /boot /sysroot /var/home /snap /home /root && \
-    ln -s /var/usrlocal /usr/local && \
     ln -s sysroot/ostree /ostree && \
     ln -s /var/srv /srv
 
