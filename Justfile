@@ -3,7 +3,6 @@ image_tag := env("BUILD_IMAGE_TAG", "latest")
 base_dir := env("BUILD_BASE_DIR", ".")
 filesystem := env("BUILD_FILESYSTEM", "ext4")
 
-# Detect container runtime: prefer podman, fall back to docker
 container_runtime := env("CONTAINER_RUNTIME", `command -v podman >/dev/null 2>&1 && echo podman || echo docker`)
 
 build-containerfile $image_name=image_name:
