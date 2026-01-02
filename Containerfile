@@ -16,15 +16,13 @@ ENV RUSTUP_HOME=/tmp/rust
 RUN --mount=type=tmpfs,dst=/tmp --mount=type=tmpfs,dst=/root --mount=type=tmpfs,dst=/boot \
     apt update -y && \
     apt install -y git curl make build-essential go-md2man libzstd-dev pkgconf dracut libostree-dev ostree && \
-    # apt install -y libssl-dev meson libfuse3-dev ostree libostree-dev && \
     curl --proto '=https' --tlsv1.2 -sSf "https://sh.rustup.rs" | sh -s -- --profile minimal -y && \
     git clone "https://github.com/bootc-dev/bootc.git" /tmp/bootc && \
     sh -c ". ${RUSTUP_HOME}/env ; make -C /tmp/bootc bin install-all" && \
     printf "systemdsystemconfdir=/etc/systemd/system\nsystemdsystemunitdir=/usr/lib/systemd/system\n" | tee "/usr/lib/dracut/dracut.conf.d/30-bootcrew-fix-bootc-module.conf" && \
     printf 'reproducible=yes\nhostonly=no\ncompress=zstd\nadd_dracutmodules+=" bootc "' | tee "/usr/lib/dracut/dracut.conf.d/30-bootcrew-bootc-container-build.conf" && \
     dracut --force "$(find /usr/lib/modules -maxdepth 1 -type d | tail -n 1)/initramfs.img" && \
-    apt remove -y git curl make build-essential go-md2man libzstd-dev pkgconf dracut libostree-dev && \
-    apt purge -y libzstd-dev libssl-dev pkg-config curl git build-essential meson libfuse3-dev go-md2man dracut libostree-dev && \
+    apt purge -y git curl make build-essential go-md2man libzstd-dev pkgconf libostree-dev && \
     apt autoremove -y && \
     apt clean -y
 
