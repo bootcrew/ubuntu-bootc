@@ -1,3 +1,7 @@
+# This repository is deprecated!
+
+Moved to <https://github.com/bootcrew/mono>
+
 # Ubuntu Bootc
 
 Reference [Ubuntu](https://ubuntu.com/) container image preconfigured for [bootc](https://github.com/bootc-dev/bootc) usage.
